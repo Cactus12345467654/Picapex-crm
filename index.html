@@ -42,7 +42,8 @@ tr:hover td { background: #fafaf8; }
 .s-NO_REPLY { background: #f3f4f6; color: #374151; }
 .s-INFO_SENT { background: #d1fae5; color: #065f46; }
 .s-CRM_SENT { background: #fce7f3; color: #9d174d; }
-.ch { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 10px; font-weight: 700; }
+.ch { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 10px; font-weight: 700; cursor: pointer; border: none; transition: transform 0.1s; }
+.ch:active { transform: scale(0.9); }
 .ch-none { background: #f3f4f6; color: #9ca3af; }
 .ch-sent { background: #fef3c7; color: #92400e; }
 .ch-replied { background: #dcfce7; color: #166534; }
@@ -81,9 +82,9 @@ tr:hover td { background: #fafaf8; }
   <div class="main">
     <div class="stats" id="stats"></div>
     <div class="legend">
-      <strong style="font-size:11px">Kanāli:</strong>
+      <strong style="font-size:11px">Kanāli (klikšķini lai mainītu):</strong>
       <div class="leg"><span class="ch ch-none">–</span> Nav mēģināts</div>
-      <div class="leg"><span class="ch ch-sent">S</span> Sūtīts, nav atbildes</div>
+      <div class="leg"><span class="ch ch-sent">S</span> Sūtīts</div>
       <div class="leg"><span class="ch ch-replied">A</span> Atbildēja</div>
     </div>
     <div class="toolbar">
@@ -113,6 +114,7 @@ tr:hover td { background: #fafaf8; }
 const STATUSES=["NEW","CONTACTED","REPLIED","CRM SENT","INFO SENT","INTERESTED","NOT INTERESTED","NO REPLY"];
 const BACKEND='https://picapex-backend.onrender.com';
 let contacts=[],expanded=new Set(),API_KEY='';
+
 function login(){
   API_KEY=document.getElementById('apiKeyInput').value.trim();
   if(!API_KEY)return;
@@ -135,24 +137,53 @@ async function loadContacts(){
     updateCities();render();
   }catch(e){document.getElementById('loginError').textContent='Nevar pieslēgties!';}
 }
+
 function sk(s){return(s||'').replace(/\s/g,'_');}
 function fmt(d){return d?String(d).substring(0,10):'–';}
-function chIcon(sent,replied,label){
-  if(!sent)return`<span class="ch ch-none" title="${label}: Nav mēģināts">–</span>`;
-  if(replied)return`<span class="ch ch-replied" title="${label}: Atbildēja">A</span>`;
-  return`<span class="ch ch-sent" title="${label}: Sūtīts">S</span>`;
+
+function nextChState(sent,replied){
+  if(!sent&&!replied)return{sent:true,replied:false};
+  if(sent&&!replied)return{sent:true,replied:true};
+  return{sent:false,replied:false};
 }
+
+function chBtn(sent,replied,label,id,field){
+  let cls=!sent?'ch-none':replied?'ch-replied':'ch-sent';
+  let txt=!sent?'–':replied?'A':'S';
+  let title=!sent?'Nav mēģināts':replied?'Atbildēja':'Sūtīts';
+  return`<button class="ch ${cls}" title="${label}: ${title}" onclick="toggleCh(${id},'${field}')">${txt}</button>`;
+}
+
+async function toggleCh(id,field){
+  const c=contacts.find(x=>x.id===id);
+  const sentField=field+'_sent';
+  const repliedField=field+'_replied';
+  const next=nextChState(c[sentField],c[repliedField]);
+  c[sentField]=next.sent;
+  c[repliedField]=next.replied;
+  render();
+  try{
+    await fetch(BACKEND+'/api/contacts/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','x-api-key':API_KEY},
+      body:JSON.stringify({[sentField]:next.sent,[repliedField]:next.replied})
+    });
+  }catch(e){console.error(e);}
+}
+
 function updateCities(){
   const sel=document.getElementById('fCity');
   const cities=[...new Set(contacts.map(c=>c.city).filter(Boolean))].sort();
   sel.innerHTML='<option value="">Visas pilsētas</option>'+cities.map(c=>`<option>${c}</option>`).join('');
 }
+
 function updateStats(){
   const counts={};STATUSES.forEach(s=>counts[s]=0);
   contacts.forEach(c=>{if(counts[c.status]!==undefined)counts[c.status]++;});
   document.getElementById('stats').innerHTML=[['Kopā',contacts.length],['Jauni',counts['NEW']],['Sazināts',counts['CONTACTED']],['Atbildēja',counts['REPLIED']],['Interese',counts['INTERESTED']],['Nav atb.',counts['NO REPLY']]].map(([l,v])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('');
   document.getElementById('headerCount').textContent=contacts.length+' kontakti';
 }
+
 function render(){
   const q=document.getElementById('search').value.toLowerCase();
   const fs=document.getElementById('fStatus').value;
@@ -162,13 +193,14 @@ function render(){
     const isExp=expanded.has(c.id);
     const row=`<tr>
       <td><button class="exp-btn" onclick="toggle(${c.id})">${isExp?'▲':'▼'}</button></td>
-      <td class="name-cell">${c.name||''}</td><td>${c.city||'–'}</td>
+      <td class="name-cell">${c.name||''}</td>
+      <td>${c.city||'–'}</td>
       <td style="white-space:nowrap">${c.phone||'–'}</td>
       <td><span class="badge s-${sk(c.status)}">${c.status||''}</span></td>
-      <td>${chIcon(c.wa_sent,c.wa_replied,'WhatsApp')}</td>
-      <td>${chIcon(c.msg_sent,c.msg_replied,'Messenger')}</td>
-      <td>${chIcon(c.ig_sent,c.ig_replied,'Instagram')}</td>
-      <td>${chIcon(c.email_sent,c.email_replied,'Email')}</td>
+      <td>${chBtn(c.wa_sent,c.wa_replied,'WhatsApp',c.id,'wa')}</td>
+      <td>${chBtn(c.msg_sent,c.msg_replied,'Messenger',c.id,'msg')}</td>
+      <td>${chBtn(c.ig_sent,c.ig_replied,'Instagram',c.id,'ig')}</td>
+      <td>${chBtn(c.email_sent,c.email_replied,'Email',c.id,'email')}</td>
       <td style="white-space:nowrap;color:#888">${fmt(c.last_message_at)}</td>
       <td><input class="mini-input" id="notes_${c.id}" value="${(c.notes||'').replace(/"/g,'&quot;')}" placeholder="Piezīme..."></td>
       <td style="display:flex;gap:5px;align-items:center;white-space:nowrap">
@@ -183,12 +215,15 @@ function render(){
       <div><div class="dl">Adrese</div><div class="dv">${c.address||'–'}</div></div>
       <div><div class="dl">Valoda</div><div class="dv">${c.language||'–'}</div></div>
       <div><div class="dl">Avots</div><div class="dv">${c.source||'–'}</div></div>
+      <div><div class="dl">Pirmais kontakts</div><div class="dv">${fmt(c.first_contact_at)}</div></div>
     </div></td></tr>`:'';
     return row+detail;
   }).join('');
   updateStats();
 }
+
 function toggle(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render();}
+
 async function save(id){
   const c=contacts.find(x=>x.id===id);
   const newStatus=document.getElementById('sel_'+id).value;
@@ -201,6 +236,7 @@ async function save(id){
   }catch(e){flash.className='flash err';flash.textContent='✗';}
   setTimeout(()=>{flash.textContent='';render();},1500);
 }
+
 updateStats();
 </script>
 </body>

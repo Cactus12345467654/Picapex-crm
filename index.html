@@ -7,17 +7,24 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f4; color: #1a1a1a; font-size: 14px; }
+.login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.login-box { background: #fff; border: 1px solid #e5e5e3; border-radius: 14px; padding: 36px 32px; width: 320px; }
+.login-box h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+.login-box p { font-size: 13px; color: #888; margin-bottom: 24px; }
+.login-box input { width: 100%; padding: 9px 12px; border: 1px solid #e0e0de; border-radius: 8px; font-size: 14px; margin-bottom: 12px; outline: none; }
+.login-box button { width: 100%; padding: 10px; background: #1a1a1a; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+.login-error { color: #dc2626; font-size: 12px; margin-top: 8px; text-align: center; }
 header { background: #fff; border-bottom: 1px solid #e5e5e3; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
-header h1 { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+header h1 { font-size: 16px; font-weight: 600; }
 header span { font-size: 12px; color: #888; background: #f0f0ee; padding: 2px 8px; border-radius: 999px; }
+.logout-btn { margin-left: auto; padding: 5px 12px; border: 1px solid #e0e0de; border-radius: 7px; font-size: 12px; cursor: pointer; background: #fff; }
 .main { padding: 20px 24px; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .stat { background: #fff; border: 1px solid #e5e5e3; border-radius: 10px; padding: 12px 14px; }
 .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
-.stat-val { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+.stat-val { font-size: 22px; font-weight: 600; }
 .toolbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .toolbar input, .toolbar select { padding: 7px 10px; border: 1px solid #e0e0de; border-radius: 8px; font-size: 13px; background: #fff; color: #1a1a1a; outline: none; }
-.toolbar input:focus, .toolbar select:focus { border-color: #a0a0ff; }
 .toolbar input { flex: 1; min-width: 180px; }
 .tbl-wrap { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; min-width: 1000px; font-size: 13px; }
@@ -39,220 +46,162 @@ tr:hover td { background: #fafaf8; }
 .ch-none { background: #f3f4f6; color: #9ca3af; }
 .ch-sent { background: #fef3c7; color: #92400e; }
 .ch-replied { background: #dcfce7; color: #166534; }
-.ch-wrap { display: flex; gap: 4px; }
 .mini-select { padding: 4px 6px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; background: #fff; color: #1a1a1a; }
 .mini-input { padding: 4px 7px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; background: #fff; color: #1a1a1a; width: 130px; }
-.save-btn { padding: 4px 10px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; cursor: pointer; background: #fff; color: #1a1a1a; }
-.save-btn:hover { background: #f5f5f4; }
-.flash { color: #166534; font-size: 11px; font-weight: 600; }
-.exp-btn { width: 22px; height: 22px; border: 1px solid #e0e0de; border-radius: 5px; background: #fff; cursor: pointer; font-size: 11px; color: #666; display: flex; align-items: center; justify-content: center; }
+.save-btn { padding: 4px 10px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; cursor: pointer; background: #fff; }
+.flash { font-size: 11px; font-weight: 600; }
+.flash.ok { color: #166534; }
+.flash.err { color: #dc2626; }
+.exp-btn { width: 22px; height: 22px; border: 1px solid #e0e0de; border-radius: 5px; background: #fff; cursor: pointer; font-size: 11px; color: #666; }
 .detail-row td { background: #fafaf8; padding: 14px 16px; }
 .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
-.dl { font-size: 10px; color: #888; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-.dv { font-size: 12px; color: #1a1a1a; }
+.dl { font-size: 10px; color: #888; margin-bottom: 2px; text-transform: uppercase; }
+.dv { font-size: 12px; }
 .legend { display: flex; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; font-size: 11px; color: #666; align-items: center; }
 .leg { display: flex; align-items: center; gap: 5px; }
+#app { display: none; }
 </style>
 </head>
 <body>
-
-<header>
-  <h1>Picapex CRM</h1>
-  <span id="header-count">0 kontakti</span>
-</header>
-
-<div class="main">
-  <div class="stats" id="stats"></div>
-
-  <div class="legend">
-    <strong style="font-size:11px">Kanāli:</strong>
-    <div class="leg"><span class="ch ch-none">–</span> Nav mēģināts</div>
-    <div class="leg"><span class="ch ch-sent">S</span> Sūtīts, nav atbildes</div>
-    <div class="leg"><span class="ch ch-replied">A</span> Atbildēja</div>
-  </div>
-
-  <div class="toolbar">
-    <input type="text" id="search" placeholder="Meklēt pēc nosaukuma, tālruņa, pilsētas..." oninput="render()">
-    <select id="fStatus" onchange="render()">
-      <option value="">Visi statusi</option>
-      <option>NEW</option><option>CONTACTED</option><option>REPLIED</option>
-      <option>CRM SENT</option><option>INFO SENT</option>
-      <option>INTERESTED</option><option>NOT INTERESTED</option><option>NO REPLY</option>
-    </select>
-    <select id="fCity" onchange="render()"><option value="">Visas pilsētas</option></select>
-    <select id="fChannel" onchange="render()">
-      <option value="">Visi kanāli</option>
-      <option>WhatsApp</option><option>Messenger</option><option>Instagram</option><option>Email</option>
-    </select>
-  </div>
-
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:30px"></th>
-          <th>Nosaukums</th>
-          <th>Pilsēta</th>
-          <th>Tālrunis</th>
-          <th>Statuss</th>
-          <th>WA</th><th>MSG</th><th>IG</th><th>Email</th>
-          <th>Pēdējā ziņa</th>
-          <th>Piezīmes</th>
-          <th>Mainīt statusu</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h2>Picapex CRM</h2>
+    <p>Ievadi piekļuves atslēgu</p>
+    <input type="password" id="apiKeyInput" placeholder="API atslēga..." onkeydown="if(event.key==='Enter') login()">
+    <button onclick="login()">Ieiet</button>
+    <div class="login-error" id="loginError"></div>
   </div>
 </div>
-
+<div id="app">
+  <header>
+    <h1>Picapex CRM</h1>
+    <span id="headerCount">0 kontakti</span>
+    <button class="logout-btn" onclick="logout()">Iziet</button>
+  </header>
+  <div class="main">
+    <div class="stats" id="stats"></div>
+    <div class="legend">
+      <strong style="font-size:11px">Kanāli:</strong>
+      <div class="leg"><span class="ch ch-none">–</span> Nav mēģināts</div>
+      <div class="leg"><span class="ch ch-sent">S</span> Sūtīts, nav atbildes</div>
+      <div class="leg"><span class="ch ch-replied">A</span> Atbildēja</div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="Meklēt..." oninput="render()">
+      <select id="fStatus" onchange="render()">
+        <option value="">Visi statusi</option>
+        <option>NEW</option><option>CONTACTED</option><option>REPLIED</option>
+        <option>CRM SENT</option><option>INFO SENT</option>
+        <option>INTERESTED</option><option>NOT INTERESTED</option><option>NO REPLY</option>
+      </select>
+      <select id="fCity" onchange="render()"><option value="">Visas pilsētas</option></select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:30px"></th>
+          <th>Nosaukums</th><th>Pilsēta</th><th>Tālrunis</th><th>Statuss</th>
+          <th>WA</th><th>MSG</th><th>IG</th><th>Email</th>
+          <th>Pēdējā ziņa</th><th>Piezīmes</th><th>Darbības</th>
+        </tr></thead>
+        <tbody id="tbody"><tr><td colspan="12" style="text-align:center;padding:40px;color:#888">Ielādē...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 <script>
-const STATUSES = ["NEW","CONTACTED","REPLIED","CRM SENT","INFO SENT","INTERESTED","NOT INTERESTED","NO REPLY"];
-
-// ======= DATI – aizstāj ar saviem īstajiem datiem =======
-let contacts = [
-  { id:1, name:"Restorāns Rīga", city:"Rīga", phone:"+37120000001", status:"NEW", notes:"", language:"LV",
-    website:"restorans.lv", email:"info@restorans.lv", instagram:"@restorans", address:"Brīvības 1", source:"Apify",
-    last_message_at:"", preferred_channel:"WhatsApp",
-    wa:{sent:false,replied:false}, msg:{sent:false,replied:false}, ig:{sent:false,replied:false}, eml:{sent:false,replied:false} },
-  { id:2, name:"Pizza Villa", city:"Rīga", phone:"+37120000002", status:"CONTACTED", notes:"Zvanu pirmdienu", language:"LV",
-    website:"pizzavilla.lv", email:"", instagram:"@pizzavilla", address:"Elizabetes 5", source:"Apify",
-    last_message_at:"2026-04-25", preferred_channel:"WhatsApp",
-    wa:{sent:true,replied:false}, msg:{sent:false,replied:false}, ig:{sent:false,replied:false}, eml:{sent:false,replied:false} },
-  { id:3, name:"Burger House", city:"Rīga", phone:"+37120000003", status:"REPLIED", notes:"Jājautā vadītājam", language:"LV",
-    website:"", email:"burger@house.lv", instagram:"", address:"Tērbatas 12", source:"Apify",
-    last_message_at:"2026-04-25", preferred_channel:"Messenger",
-    wa:{sent:true,replied:false}, msg:{sent:true,replied:true}, ig:{sent:false,replied:false}, eml:{sent:false,replied:false} },
-  { id:4, name:"Kebab King", city:"Rīga", phone:"+37120000004", status:"INTERESTED", notes:"Grib demo nākamnedēļ", language:"EN",
-    website:"kebabking.lv", email:"", instagram:"@kebabking", address:"Marijas 3", source:"Apify",
-    last_message_at:"2026-04-25", preferred_channel:"WhatsApp",
-    wa:{sent:true,replied:true}, msg:{sent:false,replied:false}, ig:{sent:false,replied:false}, eml:{sent:false,replied:false} },
-  { id:5, name:"Sushi Bar", city:"Rīga", phone:"+37120000005", status:"NOT INTERESTED", notes:"Nav vajadzīgs", language:"LV",
-    website:"sushi.lv", email:"sushi@bar.lv", instagram:"@sushibar", address:"Kr.Valdemāra 8", source:"Apify",
-    last_message_at:"2026-04-22", preferred_channel:"Instagram",
-    wa:{sent:true,replied:false}, msg:{sent:false,replied:false}, ig:{sent:true,replied:true}, eml:{sent:false,replied:false} },
-  { id:6, name:"Fast Bite", city:"Daugavpils", phone:"+37120000006", status:"NO REPLY", notes:"", language:"LV",
-    website:"", email:"", instagram:"", address:"Rīgas 45", source:"Apify",
-    last_message_at:"2026-04-24", preferred_channel:"WhatsApp",
-    wa:{sent:true,replied:false}, msg:{sent:true,replied:false}, ig:{sent:true,replied:false}, eml:{sent:false,replied:false} },
-  { id:7, name:"Café Central", city:"Rīga", phone:"+37120000007", status:"INFO SENT", notes:"Nosūtīta brosūra", language:"EN",
-    website:"cafecentral.lv", email:"info@cafecentral.lv", instagram:"@cafecentral", address:"Aspazijas 2", source:"Apify",
-    last_message_at:"2026-04-25", preferred_channel:"WhatsApp",
-    wa:{sent:true,replied:true}, msg:{sent:false,replied:false}, ig:{sent:false,replied:false}, eml:{sent:true,replied:false} },
-];
-// ========================================================
-
-const expanded = new Set();
-
-function sk(s){ return s.replace(/\s/g,"_"); }
-function fmt(d){ return d||"–"; }
-function chIcon(ch,title){
-  if(!ch.sent) return `<span class="ch ch-none" title="${title}: Nav mēģināts">–</span>`;
-  if(ch.replied) return `<span class="ch ch-replied" title="${title}: Atbildēja">A</span>`;
-  return `<span class="ch ch-sent" title="${title}: Sūtīts, nav atbildes">S</span>`;
+const STATUSES=["NEW","CONTACTED","REPLIED","CRM SENT","INFO SENT","INTERESTED","NOT INTERESTED","NO REPLY"];
+const BACKEND='https://picapex-backend.onrender.com';
+let contacts=[],expanded=new Set(),API_KEY='';
+function login(){
+  API_KEY=document.getElementById('apiKeyInput').value.trim();
+  if(!API_KEY)return;
+  loadContacts();
 }
-
+function logout(){
+  API_KEY='';contacts=[];
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('apiKeyInput').value='';
+}
+async function loadContacts(){
+  try{
+    const res=await fetch(BACKEND+'/api/contacts',{headers:{'x-api-key':API_KEY}});
+    if(res.status===401){document.getElementById('loginError').textContent='Nepareiza atslēga!';return;}
+    contacts=await res.json();
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('loginError').textContent='';
+    updateCities();render();
+  }catch(e){document.getElementById('loginError').textContent='Nevar pieslēgties!';}
+}
+function sk(s){return(s||'').replace(/\s/g,'_');}
+function fmt(d){return d?String(d).substring(0,10):'–';}
+function chIcon(sent,replied,label){
+  if(!sent)return`<span class="ch ch-none" title="${label}: Nav mēģināts">–</span>`;
+  if(replied)return`<span class="ch ch-replied" title="${label}: Atbildēja">A</span>`;
+  return`<span class="ch ch-sent" title="${label}: Sūtīts">S</span>`;
+}
 function updateCities(){
-  const sel=document.getElementById("fCity");
-  const cities=[...new Set(contacts.map(c=>c.city))].sort();
-  sel.innerHTML='<option value="">Visas pilsētas</option>'+cities.map(c=>`<option>${c}</option>`).join("");
+  const sel=document.getElementById('fCity');
+  const cities=[...new Set(contacts.map(c=>c.city).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Visas pilsētas</option>'+cities.map(c=>`<option>${c}</option>`).join('');
 }
-
 function updateStats(){
-  const counts={};
-  STATUSES.forEach(s=>counts[s]=0);
-  contacts.forEach(c=>{ if(counts[c.status]!==undefined) counts[c.status]++; });
-  document.getElementById("stats").innerHTML=[
-    ["Kopā",contacts.length],["Jauni",counts["NEW"]],["Sazināts",counts["CONTACTED"]],
-    ["Atbildēja",counts["REPLIED"]],["Interese",counts["INTERESTED"]],["Nav atb.",counts["NO REPLY"]]
-  ].map(([l,v])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join("");
-  document.getElementById("header-count").textContent=contacts.length+" kontakti";
+  const counts={};STATUSES.forEach(s=>counts[s]=0);
+  contacts.forEach(c=>{if(counts[c.status]!==undefined)counts[c.status]++;});
+  document.getElementById('stats').innerHTML=[['Kopā',contacts.length],['Jauni',counts['NEW']],['Sazināts',counts['CONTACTED']],['Atbildēja',counts['REPLIED']],['Interese',counts['INTERESTED']],['Nav atb.',counts['NO REPLY']]].map(([l,v])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('');
+  document.getElementById('headerCount').textContent=contacts.length+' kontakti';
 }
-
 function render(){
-  const q=document.getElementById("search").value.toLowerCase();
-  const fs=document.getElementById("fStatus").value;
-  const fc=document.getElementById("fCity").value;
-  const fch=document.getElementById("fChannel").value;
-  const filtered=contacts.filter(c=>
-    (!q||c.name.toLowerCase().includes(q)||c.phone.includes(q)||c.city.toLowerCase().includes(q))&&
-    (!fs||c.status===fs)&&(!fc||c.city===fc)&&
-    (!fch||c.preferred_channel===fch)
-  );
-  document.getElementById("tbody").innerHTML=filtered.map(c=>{
+  const q=document.getElementById('search').value.toLowerCase();
+  const fs=document.getElementById('fStatus').value;
+  const fc=document.getElementById('fCity').value;
+  const filtered=contacts.filter(c=>(!q||(c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.city||'').toLowerCase().includes(q))&&(!fs||c.status===fs)&&(!fc||c.city===fc));
+  document.getElementById('tbody').innerHTML=filtered.map(c=>{
     const isExp=expanded.has(c.id);
     const row=`<tr>
-      <td><button class="exp-btn" onclick="toggle(${c.id})">${isExp?"▲":"▼"}</button></td>
-      <td class="name-cell">${c.name}</td>
-      <td>${c.city}</td>
-      <td style="white-space:nowrap">${c.phone}</td>
-      <td><span class="badge s-${sk(c.status)}">${c.status}</span></td>
-      <td>${chIcon(c.wa,"WhatsApp")}</td>
-      <td>${chIcon(c.msg,"Messenger")}</td>
-      <td>${chIcon(c.ig,"Instagram")}</td>
-      <td>${chIcon(c.eml,"Email")}</td>
+      <td><button class="exp-btn" onclick="toggle(${c.id})">${isExp?'▲':'▼'}</button></td>
+      <td class="name-cell">${c.name||''}</td><td>${c.city||'–'}</td>
+      <td style="white-space:nowrap">${c.phone||'–'}</td>
+      <td><span class="badge s-${sk(c.status)}">${c.status||''}</span></td>
+      <td>${chIcon(c.wa_sent,c.wa_replied,'WhatsApp')}</td>
+      <td>${chIcon(c.msg_sent,c.msg_replied,'Messenger')}</td>
+      <td>${chIcon(c.ig_sent,c.ig_replied,'Instagram')}</td>
+      <td>${chIcon(c.email_sent,c.email_replied,'Email')}</td>
       <td style="white-space:nowrap;color:#888">${fmt(c.last_message_at)}</td>
-      <td><input class="mini-input" id="notes_${c.id}" value="${c.notes}" placeholder="Piezīme..."></td>
+      <td><input class="mini-input" id="notes_${c.id}" value="${(c.notes||'').replace(/"/g,'&quot;')}" placeholder="Piezīme..."></td>
       <td style="display:flex;gap:5px;align-items:center;white-space:nowrap">
-        <select class="mini-select" id="sel_${c.id}">
-          ${STATUSES.map(s=>`<option ${s===c.status?"selected":""}>${s}</option>`).join("")}
-        </select>
+        <select class="mini-select" id="sel_${c.id}">${STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('')}</select>
         <button class="save-btn" onclick="save(${c.id})">Saglabāt</button>
         <span class="flash" id="flash_${c.id}"></span>
-      </td>
-    </tr>`;
-    const detail=isExp?`<tr class="detail-row"><td colspan="12">
-      <div class="detail-grid">
-        <div><div class="dl">Mājaslapa</div><div class="dv">${c.website||"–"}</div></div>
-        <div><div class="dl">E-pasts</div><div class="dv">${c.email||"–"}</div></div>
-        <div><div class="dl">Instagram</div><div class="dv">${c.instagram||"–"}</div></div>
-        <div><div class="dl">Adrese</div><div class="dv">${c.address||"–"}</div></div>
-        <div><div class="dl">Valoda</div><div class="dv">${c.language}</div></div>
-        <div><div class="dl">Avots</div><div class="dv">${c.source||"–"}</div></div>
-        <div><div class="dl">Vēlamais kanāls</div><div class="dv">${c.preferred_channel||"–"}</div></div>
-        <div><div class="dl">WhatsApp</div><div class="dv">${!c.wa.sent?"Nav mēģināts":c.wa.replied?"✓ Atbildēja":"Sūtīts – nav atbildes"}</div></div>
-        <div><div class="dl">Messenger</div><div class="dv">${!c.msg.sent?"Nav mēģināts":c.msg.replied?"✓ Atbildēja":"Sūtīts – nav atbildes"}</div></div>
-        <div><div class="dl">Instagram DM</div><div class="dv">${!c.ig.sent?"Nav mēģināts":c.ig.replied?"✓ Atbildēja":"Sūtīts – nav atbildes"}</div></div>
-        <div><div class="dl">Email</div><div class="dv">${!c.eml.sent?"Nav mēģināts":c.eml.replied?"✓ Atbildēja":"Sūtīts – nav atbildes"}</div></div>
-      </div>
-    </td></tr>`:"";
+      </td></tr>`;
+    const detail=isExp?`<tr class="detail-row"><td colspan="12"><div class="detail-grid">
+      <div><div class="dl">Mājaslapa</div><div class="dv">${c.website||'–'}</div></div>
+      <div><div class="dl">E-pasts</div><div class="dv">${c.email||'–'}</div></div>
+      <div><div class="dl">Instagram</div><div class="dv">${c.instagram||'–'}</div></div>
+      <div><div class="dl">Adrese</div><div class="dv">${c.address||'–'}</div></div>
+      <div><div class="dl">Valoda</div><div class="dv">${c.language||'–'}</div></div>
+      <div><div class="dl">Avots</div><div class="dv">${c.source||'–'}</div></div>
+    </div></td></tr>`:'';
     return row+detail;
-  }).join("");
+  }).join('');
   updateStats();
 }
-
-function toggle(id){ expanded.has(id)?expanded.delete(id):expanded.add(id); render(); }
-
-function save(id){
+function toggle(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render();}
+async function save(id){
   const c=contacts.find(x=>x.id===id);
-  c.status=document.getElementById("sel_"+id).value;
-  c.notes=document.getElementById("notes_"+id).value;
-  c.last_message_at=new Date().toISOString().substring(0,10);
-  const flash=document.getElementById("flash_"+id);
-  flash.textContent="✓ Saglabāts";
-  setTimeout(()=>{ flash.textContent=""; render(); },1500);
-  updateStats();
+  const newStatus=document.getElementById('sel_'+id).value;
+  const newNotes=document.getElementById('notes_'+id).value;
+  const flash=document.getElementById('flash_'+id);
+  try{
+    const res=await fetch(BACKEND+'/api/contacts/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-api-key':API_KEY},body:JSON.stringify({status:newStatus,notes:newNotes})});
+    if(res.ok){c.status=newStatus;c.notes=newNotes;c.last_message_at=new Date().toISOString();flash.className='flash ok';flash.textContent='✓';}
+    else{flash.className='flash err';flash.textContent='✗';}
+  }catch(e){flash.className='flash err';flash.textContent='✗';}
+  setTimeout(()=>{flash.textContent='';render();},1500);
 }
-
-updateCities();
-render();
+updateStats();
 </script>
 </body>
 </html>
-Done
-Dari tieši šo GitHub lapā:
-
-Ctrl+A – iezīmē visu kas tur ir
-Delete – izdzēš visu
-Tagad GitHub lapā ir tukšs lauks
-Tad nāc atpakaļ šeit uz chat un dari:
-
-Klikšķini uz mana atbildes teksta kur sākās <!DOCTYPE html> – bet tas nav ērti
-Vieglākais veids – lejupielādē failu tieši:
-
-Spied uz "index" saites augšā šajā chat ar peles LABO klikšķi → "Save link as" → saglabā kā index.html uz Desktop → atver ar Notepad → Ctrl+A → Ctrl+C → ielīmē GitHub!
-
-Vai dari tā un saki vai izdodas?
-
-
-

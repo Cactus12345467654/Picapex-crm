@@ -176,7 +176,12 @@ async function toggleCh(id,field){
   }catch(e){console.error(e);}
 }
 
-async function deleteContact(id,name){
+let autoSaveTimers={};
+function autoSave(id){
+  clearTimeout(autoSaveTimers[id]);
+  autoSaveTimers[id]=setTimeout(()=>save(id),2000);
+}
+  async function deleteContact(id,name){
   if(!confirm('Dzēst "'+name+'"?\nŠī darbība ir neatgriezeniska!'))return;
   try{
     const res=await fetch(BACKEND+'/api/contacts/'+id,{method:'DELETE',headers:{'x-api-key':API_KEY}});
@@ -225,10 +230,9 @@ function render(){
       <td>${chBtn(c.ig_sent,c.ig_replied,c.ig_not_exist,'Instagram',c.id,'ig')}</td>
       <td>${chBtn(c.email_sent,c.email_replied,c.email_not_exist,'Email',c.id,'email')}</td>
       <td style="white-space:nowrap;color:#888">${fmt(c.last_message_at)}</td>
-      <td><input class="mini-input" id="notes_${c.id}" value="${(c.notes||'').replace(/"/g,'&quot;')}" placeholder="Piezīme..."></td>
+      <td><input class="mini-input" id="notes_${c.id}" value="${(c.notes||'').replace(/"/g,'&quot;')}" placeholder="Piezīme..." oninput="autoSave(${c.id})"></td>
       <td style="display:flex;gap:5px;align-items:center;white-space:nowrap">
-        <select class="mini-select" id="sel_${c.id}">${STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('')}</select>
-        <button class="save-btn" onclick="save(${c.id})">Saglabāt</button>
+      <select class="mini-select" id="sel_${c.id}" onchange="autoSave(${c.id})">${STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('')}</select>
         <button class="del-btn" onclick="deleteContact(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🗑</button>
         <span class="flash" id="flash_${c.id}"></span>
       </td></tr>`;

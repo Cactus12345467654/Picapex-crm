@@ -19,7 +19,7 @@ header h1 { font-size: 16px; font-weight: 600; }
 header span { font-size: 12px; color: #888; background: #f0f0ee; padding: 2px 8px; border-radius: 999px; }
 .logout-btn { margin-left: auto; padding: 5px 12px; border: 1px solid #e0e0de; border-radius: 7px; font-size: 12px; cursor: pointer; background: #fff; }
 .main { padding: 20px 24px; }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .stat { background: #fff; border: 1px solid #e5e5e3; border-radius: 10px; padding: 12px 14px; }
 .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
 .stat-val { font-size: 22px; font-weight: 600; }
@@ -27,7 +27,7 @@ header span { font-size: 12px; color: #888; background: #f0f0ee; padding: 2px 8p
 .toolbar input, .toolbar select { padding: 7px 10px; border: 1px solid #e0e0de; border-radius: 8px; font-size: 13px; background: #fff; color: #1a1a1a; outline: none; }
 .toolbar input { flex: 1; min-width: 180px; }
 .tbl-wrap { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; min-width: 1000px; font-size: 13px; }
+table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 13px; }
 th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; color: #888; border-bottom: 1px solid #e5e5e3; background: #fafaf8; white-space: nowrap; }
 td { padding: 10px 12px; border-bottom: 1px solid #f0f0ee; vertical-align: middle; }
 tr:last-child td { border-bottom: none; }
@@ -47,9 +47,12 @@ tr:hover td { background: #fafaf8; }
 .ch-none { background: #f3f4f6; color: #9ca3af; }
 .ch-sent { background: #fef3c7; color: #92400e; }
 .ch-replied { background: #dcfce7; color: #166534; }
+.ch-not-exist { background: #fee2e2; color: #991b1b; }
 .mini-select { padding: 4px 6px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; background: #fff; color: #1a1a1a; }
 .mini-input { padding: 4px 7px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; background: #fff; color: #1a1a1a; width: 130px; }
 .save-btn { padding: 4px 10px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; cursor: pointer; background: #fff; }
+.del-btn { padding: 4px 8px; border: 1px solid #fca5a5; border-radius: 6px; font-size: 11px; cursor: pointer; background: #fff; color: #dc2626; }
+.del-btn:hover { background: #fee2e2; }
 .flash { font-size: 11px; font-weight: 600; }
 .flash.ok { color: #166534; }
 .flash.err { color: #dc2626; }
@@ -86,6 +89,7 @@ tr:hover td { background: #fafaf8; }
       <div class="leg"><span class="ch ch-none">–</span> Nav mēģināts</div>
       <div class="leg"><span class="ch ch-sent">S</span> Sūtīts</div>
       <div class="leg"><span class="ch ch-replied">A</span> Atbildēja</div>
+      <div class="leg"><span class="ch ch-not-exist">N</span> Neeksistē</div>
     </div>
     <div class="toolbar">
       <input type="text" id="search" placeholder="Meklēt..." oninput="render()">
@@ -102,10 +106,10 @@ tr:hover td { background: #fafaf8; }
         <thead><tr>
           <th style="width:30px"></th>
           <th>Nosaukums</th><th>Pilsēta</th><th>Tālrunis</th><th>Statuss</th>
-          <th>WA</th><th>MSG</th><th>IG</th><th>Email</th>
+          <th>WA</th><th>SMS</th><th>MSG</th><th>IG</th><th>Email</th>
           <th>Pēdējā ziņa</th><th>Piezīmes</th><th>Darbības</th>
         </tr></thead>
-        <tbody id="tbody"><tr><td colspan="12" style="text-align:center;padding:40px;color:#888">Ielādē...</td></tr></tbody>
+        <tbody id="tbody"><tr><td colspan="13" style="text-align:center;padding:40px;color:#888">Ielādē...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -141,34 +145,44 @@ async function loadContacts(){
 function sk(s){return(s||'').replace(/\s/g,'_');}
 function fmt(d){return d?String(d).substring(0,10):'–';}
 
-function nextChState(sent,replied){
-  if(!sent&&!replied)return{sent:true,replied:false};
-  if(sent&&!replied)return{sent:true,replied:true};
-  return{sent:false,replied:false};
+function nextChState(sent,replied,notExist){
+  if(!sent&&!replied&&!notExist)return{sent:true,replied:false,notExist:false};
+  if(sent&&!replied&&!notExist)return{sent:true,replied:true,notExist:false};
+  if(sent&&replied&&!notExist)return{sent:false,replied:false,notExist:true};
+  return{sent:false,replied:false,notExist:false};
 }
 
-function chBtn(sent,replied,label,id,field){
-  let cls=!sent?'ch-none':replied?'ch-replied':'ch-sent';
-  let txt=!sent?'–':replied?'A':'S';
-  let title=!sent?'Nav mēģināts':replied?'Atbildēja':'Sūtīts';
+function chBtn(sent,replied,notExist,label,id,field){
+  let cls,txt,title;
+  if(notExist){cls='ch-not-exist';txt='N';title='Neeksistē';}
+  else if(replied){cls='ch-replied';txt='A';title='Atbildēja';}
+  else if(sent){cls='ch-sent';txt='S';title='Sūtīts';}
+  else{cls='ch-none';txt='–';title='Nav mēģināts';}
   return`<button class="ch ${cls}" title="${label}: ${title}" onclick="toggleCh(${id},'${field}')">${txt}</button>`;
 }
 
 async function toggleCh(id,field){
   const c=contacts.find(x=>x.id===id);
-  const sentField=field+'_sent';
-  const repliedField=field+'_replied';
-  const next=nextChState(c[sentField],c[repliedField]);
-  c[sentField]=next.sent;
-  c[repliedField]=next.replied;
+  const sF=field+'_sent', rF=field+'_replied', nF=field+'_not_exist';
+  const next=nextChState(c[sF],c[rF],c[nF]);
+  c[sF]=next.sent; c[rF]=next.replied; c[nF]=next.notExist;
   render();
   try{
     await fetch(BACKEND+'/api/contacts/'+id,{
       method:'PATCH',
       headers:{'Content-Type':'application/json','x-api-key':API_KEY},
-      body:JSON.stringify({[sentField]:next.sent,[repliedField]:next.replied})
+      body:JSON.stringify({[sF]:next.sent,[rF]:next.replied,[nF]:next.notExist})
     });
   }catch(e){console.error(e);}
+}
+
+async function deleteContact(id,name){
+  if(!confirm('Dzēst "'+name+'"?\nŠī darbība ir neatgriezeniska!'))return;
+  try{
+    const res=await fetch(BACKEND+'/api/contacts/'+id,{method:'DELETE',headers:{'x-api-key':API_KEY}});
+    if(res.ok){contacts=contacts.filter(x=>x.id!==id);render();}
+    else alert('Kļūda dzēšot!');
+  }catch(e){alert('Nav savienojuma!');}
 }
 
 function updateCities(){
@@ -180,7 +194,15 @@ function updateCities(){
 function updateStats(){
   const counts={};STATUSES.forEach(s=>counts[s]=0);
   contacts.forEach(c=>{if(counts[c.status]!==undefined)counts[c.status]++;});
-  document.getElementById('stats').innerHTML=[['Kopā',contacts.length],['Jauni',counts['NEW']],['Sazināts',counts['CONTACTED']],['Atbildēja',counts['REPLIED']],['Interese',counts['INTERESTED']],['Nav atb.',counts['NO REPLY']]].map(([l,v])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('');
+  document.getElementById('stats').innerHTML=[
+    ['Kopā',contacts.length],
+    ['Jauni',counts['NEW']],
+    ['Sazināts',counts['CONTACTED']],
+    ['Atbildēja',counts['REPLIED']],
+    ['Info Sent',counts['INFO SENT']],
+    ['Interese',counts['INTERESTED']],
+    ['Nav atb.',counts['NO REPLY']]
+  ].map(([l,v])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('');
   document.getElementById('headerCount').textContent=contacts.length+' kontakti';
 }
 
@@ -197,18 +219,20 @@ function render(){
       <td>${c.city||'–'}</td>
       <td style="white-space:nowrap">${c.phone||'–'}</td>
       <td><span class="badge s-${sk(c.status)}">${c.status||''}</span></td>
-      <td>${chBtn(c.wa_sent,c.wa_replied,'WhatsApp',c.id,'wa')}</td>
-      <td>${chBtn(c.msg_sent,c.msg_replied,'Messenger',c.id,'msg')}</td>
-      <td>${chBtn(c.ig_sent,c.ig_replied,'Instagram',c.id,'ig')}</td>
-      <td>${chBtn(c.email_sent,c.email_replied,'Email',c.id,'email')}</td>
+      <td>${chBtn(c.wa_sent,c.wa_replied,c.wa_not_exist,'WhatsApp',c.id,'wa')}</td>
+      <td>${chBtn(c.sms_sent,c.sms_replied,c.sms_not_exist,'SMS',c.id,'sms')}</td>
+      <td>${chBtn(c.msg_sent,c.msg_replied,c.msg_not_exist,'Messenger',c.id,'msg')}</td>
+      <td>${chBtn(c.ig_sent,c.ig_replied,c.ig_not_exist,'Instagram',c.id,'ig')}</td>
+      <td>${chBtn(c.email_sent,c.email_replied,c.email_not_exist,'Email',c.id,'email')}</td>
       <td style="white-space:nowrap;color:#888">${fmt(c.last_message_at)}</td>
       <td><input class="mini-input" id="notes_${c.id}" value="${(c.notes||'').replace(/"/g,'&quot;')}" placeholder="Piezīme..."></td>
       <td style="display:flex;gap:5px;align-items:center;white-space:nowrap">
         <select class="mini-select" id="sel_${c.id}">${STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('')}</select>
         <button class="save-btn" onclick="save(${c.id})">Saglabāt</button>
+        <button class="del-btn" onclick="deleteContact(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🗑</button>
         <span class="flash" id="flash_${c.id}"></span>
       </td></tr>`;
-    const detail=isExp?`<tr class="detail-row"><td colspan="12"><div class="detail-grid">
+    const detail=isExp?`<tr class="detail-row"><td colspan="13"><div class="detail-grid">
       <div><div class="dl">Mājaslapa</div><div class="dv">${c.website||'–'}</div></div>
       <div><div class="dl">E-pasts</div><div class="dv">${c.email||'–'}</div></div>
       <div><div class="dl">Instagram</div><div class="dv">${c.instagram||'–'}</div></div>

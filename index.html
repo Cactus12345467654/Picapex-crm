@@ -7,6 +7,7 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f4; color: #1a1a1a; font-size: 14px; }
+
 .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .login-box { background: #fff; border: 1px solid #e5e5e3; border-radius: 14px; padding: 36px 32px; width: 320px; }
 .login-box h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
@@ -14,25 +15,48 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .login-box input { width: 100%; padding: 9px 12px; border: 1px solid #e0e0de; border-radius: 8px; font-size: 14px; margin-bottom: 12px; outline: none; }
 .login-box button { width: 100%; padding: 10px; background: #1a1a1a; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
 .login-error { color: #dc2626; font-size: 12px; margin-top: 8px; text-align: center; }
+
 header { background: #fff; border-bottom: 1px solid #e5e5e3; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
 header h1 { font-size: 16px; font-weight: 600; }
 header span { font-size: 12px; color: #888; background: #f0f0ee; padding: 2px 8px; border-radius: 999px; }
 .logout-btn { margin-left: auto; padding: 5px 12px; border: 1px solid #e0e0de; border-radius: 7px; font-size: 12px; cursor: pointer; background: #fff; }
+
 .main { padding: 20px 24px; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .stat { background: #fff; border: 1px solid #e5e5e3; border-radius: 10px; padding: 12px 14px; }
 .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
 .stat-val { font-size: 22px; font-weight: 600; }
-.toolbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-.toolbar input, .toolbar select { padding: 7px 10px; border: 1px solid #e0e0de; border-radius: 8px; font-size: 13px; background: #fff; color: #1a1a1a; outline: none; }
-.toolbar input { flex: 1; min-width: 180px; }
-.tbl-wrap { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 220px); }
-table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 13px; }
-th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; color: #888; border-bottom: 1px solid #e5e5e3; background: #fafaf8; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
-td { padding: 10px 12px; border-bottom: 1px solid #f0f0ee; vertical-align: middle; }
+
+.toolbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.toolbar input[type=text], .toolbar select { padding: 7px 10px; border: 1px solid #e0e0de; border-radius: 8px; font-size: 13px; background: #fff; color: #1a1a1a; outline: none; }
+.toolbar input[type=text] { flex: 1; min-width: 180px; }
+
+.tbl-wrap { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 240px); }
+table { border-collapse: collapse; width: 100%; min-width: 1200px; font-size: 13px; }
+th { text-align: left; padding: 10px 10px; font-size: 11px; font-weight: 600; color: #888; border-bottom: 1px solid #e5e5e3; background: #fafaf8; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
+td { padding: 8px 10px; border-bottom: 1px solid #f0f0ee; vertical-align: middle; }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: #fafaf8; }
-.name-cell { font-weight: 500; }
+
+tr.row-NEW td { background: #eff6ff; }
+tr.row-CONTACTED td { background: #fffbeb; }
+tr.row-REPLIED td { background: #f5f3ff; }
+tr.row-INTERESTED td { background: #f0fdf4; }
+tr.row-NOT_INTERESTED td { background: #fff1f2; }
+tr.row-NO_REPLY td { background: #f9fafb; filter: blur(1.5px); opacity: 0.55; pointer-events: none; }
+tr.row-INFO_SENT td { background: #ecfdf5; }
+tr.row-CRM_SENT td { background: #fdf4ff; }
+tr.row-NO_REPLY { position: relative; }
+tr.row-NO_REPLY .unblur-btn { pointer-events: all; }
+tr:not(.row-NO_REPLY):hover td { filter: brightness(0.97); }
+
+@keyframes blink-remind {
+  0%,100% { background-color: inherit; }
+  50% { background-color: #fde68a !important; }
+}
+tr.remind-due td { animation: blink-remind 1.2s ease-in-out infinite; }
+
+.num-cell { color: #aaa; font-size: 11px; font-weight: 600; width: 32px; text-align: right; padding-right: 6px; }
+
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; }
 .s-NEW { background: #dbeafe; color: #1e40af; }
 .s-CONTACTED { background: #fef3c7; color: #92400e; }
@@ -42,31 +66,40 @@ tr:hover td { background: #fafaf8; }
 .s-NO_REPLY { background: #f3f4f6; color: #374151; }
 .s-INFO_SENT { background: #d1fae5; color: #065f46; }
 .s-CRM_SENT { background: #fce7f3; color: #9d174d; }
+
 .ch { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 10px; font-weight: 700; cursor: pointer; border: none; transition: transform 0.1s; }
 .ch:active { transform: scale(0.9); }
 .ch-none { background: #f3f4f6; color: #9ca3af; }
 .ch-sent { background: #fef3c7; color: #92400e; }
 .ch-replied { background: #dcfce7; color: #166534; }
 .ch-not-exist { background: #fee2e2; color: #991b1b; }
+
 .mini-select { padding: 4px 6px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; background: #fff; color: #1a1a1a; }
-.mini-input { padding: 4px 7px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; background: #fff; color: #1a1a1a; width: 130px; }
-.save-btn { padding: 4px 10px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; cursor: pointer; background: #fff; }
+.mini-input { padding: 4px 7px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; background: #fff; color: #1a1a1a; width: 120px; }
+.mini-date { padding: 4px 6px; border: 1px solid #e0e0de; border-radius: 6px; font-size: 11px; background: #fff; color: #1a1a1a; width: 120px; }
 .del-btn { padding: 4px 8px; border: 1px solid #fca5a5; border-radius: 6px; font-size: 11px; cursor: pointer; background: #fff; color: #dc2626; }
 .del-btn:hover { background: #fee2e2; }
+.unblur-btn { padding: 3px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 10px; cursor: pointer; background: #fff; color: #374151; }
 .flash { font-size: 11px; font-weight: 600; }
 .flash.ok { color: #166534; }
 .flash.err { color: #dc2626; }
 .exp-btn { width: 22px; height: 22px; border: 1px solid #e0e0de; border-radius: 5px; background: #fff; cursor: pointer; font-size: 11px; color: #666; }
-.detail-row td { background: #fafaf8; padding: 14px 16px; }
+
+.detail-row td { background: #fafaf8 !important; padding: 14px 16px; }
 .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
 .dl { font-size: 10px; color: #888; margin-bottom: 2px; text-transform: uppercase; }
 .dv { font-size: 12px; }
+
 .legend { display: flex; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; font-size: 11px; color: #666; align-items: center; }
 .leg { display: flex; align-items: center; gap: 5px; }
+.remind-cell { display: flex; align-items: center; gap: 4px; }
+.remind-bell.due { color: #f59e0b; }
+.remind-bell.ok { color: #9ca3af; }
 #app { display: none; }
 </style>
 </head>
 <body>
+
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
     <h2>Picapex CRM</h2>
@@ -76,6 +109,7 @@ tr:hover td { background: #fafaf8; }
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
+
 <div id="app">
   <header>
     <h1>Picapex CRM</h1>
@@ -90,6 +124,7 @@ tr:hover td { background: #fafaf8; }
       <div class="leg"><span class="ch ch-sent">S</span> Sūtīts</div>
       <div class="leg"><span class="ch ch-replied">A</span> Atbildēja</div>
       <div class="leg"><span class="ch ch-not-exist">N</span> Neeksistē</div>
+      <div class="leg" style="margin-left:16px">🔔 = Atgādinājums iestatīts &nbsp;|&nbsp; ⚡ = Šodien/nokavēts</div>
     </div>
     <div class="toolbar">
       <input type="text" id="search" placeholder="Meklēt..." oninput="render()">
@@ -100,143 +135,249 @@ tr:hover td { background: #fafaf8; }
         <option>INTERESTED</option><option>NOT INTERESTED</option><option>NO REPLY</option>
       </select>
       <select id="fCity" onchange="render()"><option value="">Visas pilsētas</option></select>
+      <select id="fRemind" onchange="render()">
+        <option value="">Visi</option>
+        <option value="due">⚡ Nokavēti / šodienas atgādinājumi</option>
+        <option value="set">🔔 Ar atgādinājumu</option>
+      </select>
     </div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
+          <th style="width:36px">#</th>
           <th style="width:30px"></th>
-          <th>Nosaukums</th><th>Pilsēta</th><th>Tālrunis</th><th>Statuss</th>
+          <th>Nosaukums</th>
+          <th>Pilsēta</th>
+          <th>Tālrunis</th>
+          <th>Statuss</th>
           <th>WA</th><th>SMS</th><th>MSG</th><th>IG</th><th>Email</th>
-          <th>Pēdējā ziņa</th><th>Piezīmes</th><th>Darbības</th>
+          <th>Pēdējā ziņa</th>
+          <th>Atgādināt</th>
+          <th>Piezīmes</th>
+          <th>Darbības</th>
         </tr></thead>
-        <tbody id="tbody"><tr><td colspan="13" style="text-align:center;padding:40px;color:#888">Ielādē...</td></tr></tbody>
+        <tbody id="tbody"><tr><td colspan="15" style="text-align:center;padding:40px;color:#888">Ielādē...</td></tr></tbody>
       </table>
     </div>
   </div>
 </div>
-<script>
-const STATUSES=["NEW","CONTACTED","REPLIED","CRM SENT","INFO SENT","INTERESTED","NOT INTERESTED","NO REPLY"];
-const BACKEND='https://picapex-backend.onrender.com';
-let contacts=[],expanded=new Set(),API_KEY='';
 
-function login(){
-  API_KEY=document.getElementById('apiKeyInput').value.trim();
-  if(!API_KEY)return;
+<script>
+const STATUSES = ["NEW","CONTACTED","REPLIED","CRM SENT","INFO SENT","INTERESTED","NOT INTERESTED","NO REPLY"];
+const BACKEND = 'https://picapex-backend.onrender.com';
+let contacts = [], expanded = new Set(), API_KEY = '';
+
+function login() {
+  API_KEY = document.getElementById('apiKeyInput').value.trim();
+  if (!API_KEY) return;
   loadContacts();
 }
-function logout(){
-  API_KEY='';contacts=[];
-  document.getElementById('app').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('apiKeyInput').value='';
-}
-async function loadContacts(){
-  try{
-    const res=await fetch(BACKEND+'/api/contacts',{headers:{'x-api-key':API_KEY}});
-    if(res.status===401){document.getElementById('loginError').textContent='Nepareiza atslēga!';return;}
-    contacts=await res.json();
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.getElementById('loginError').textContent='';
-    updateCities();render();
-  }catch(e){document.getElementById('loginError').textContent='Nevar pieslēgties!';}
+function logout() {
+  API_KEY = ''; contacts = [];
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('apiKeyInput').value = '';
 }
 
-function sk(s){return(s||'').replace(/\s/g,'_');}
-function fmt(d){return d?String(d).substring(0,10):'–';}
-
-function nextChState(sent,replied,notExist){
-  if(!sent&&!replied&&!notExist)return{sent:true,replied:false,notExist:false};
-  if(sent&&!replied&&!notExist)return{sent:true,replied:true,notExist:false};
-  if(sent&&replied&&!notExist)return{sent:false,replied:false,notExist:true};
-  return{sent:false,replied:false,notExist:false};
+async function loadContacts() {
+  try {
+    const res = await fetch(BACKEND + '/api/contacts', { headers: { 'x-api-key': API_KEY } });
+    if (res.status === 401) { document.getElementById('loginError').textContent = 'Nepareiza atslēga!'; return; }
+    contacts = await res.json();
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('loginError').textContent = '';
+    updateCities(); render();
+  } catch(e) { document.getElementById('loginError').textContent = 'Nevar pieslēgties!'; }
 }
 
-function chBtn(sent,replied,notExist,label,id,field){
-  let cls,txt,title;
-  if(notExist){cls='ch-not-exist';txt='N';title='Neeksistē';}
-  else if(replied){cls='ch-replied';txt='A';title='Atbildēja';}
-  else if(sent){cls='ch-sent';txt='S';title='Sūtīts';}
-  else{cls='ch-none';txt='–';title='Nav mēģināts';}
-  return`<button class="ch ${cls}" title="${label}: ${title}" onclick="toggleCh(${id},'${field}')">${txt}</button>`;
+function sk(s) { return (s || '').replace(/[\s/]/g, '_'); }
+function fmt(d) { return d ? String(d).substring(0, 10) : '–'; }
+
+function isReminderDue(dateStr) {
+  if (!dateStr) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  return d <= today;
 }
 
-async function toggleCh(id,field){
-  const c=contacts.find(x=>x.id===id);
-  const sF=field+'_sent', rF=field+'_replied', nF=field+'_not_exist';
-  const next=nextChState(c[sF],c[rF],c[nF]);
-  c[sF]=next.sent; c[rF]=next.replied; c[nF]=next.notExist;
+function nextChState(sent, replied, notExist) {
+  if (!sent && !replied && !notExist) return { sent: true, replied: false, notExist: false };
+  if (sent && !replied && !notExist) return { sent: true, replied: true, notExist: false };
+  if (sent && replied && !notExist) return { sent: false, replied: false, notExist: true };
+  return { sent: false, replied: false, notExist: false };
+}
+
+function chBtn(sent, replied, notExist, label, id, field) {
+  let cls, txt, title;
+  if (notExist) { cls = 'ch-not-exist'; txt = 'N'; title = 'Neeksistē'; }
+  else if (replied) { cls = 'ch-replied'; txt = 'A'; title = 'Atbildēja'; }
+  else if (sent) { cls = 'ch-sent'; txt = 'S'; title = 'Sūtīts'; }
+  else { cls = 'ch-none'; txt = '–'; title = 'Nav mēģināts'; }
+  return `<button class="ch ${cls}" title="${label}: ${title}" onclick="toggleCh(${id},'${field}')">${txt}</button>`;
+}
+
+async function toggleCh(id, field) {
+  const c = contacts.find(x => x.id === id);
+  const sF = field+'_sent', rF = field+'_replied', nF = field+'_not_exist';
+  const next = nextChState(c[sF], c[rF], c[nF]);
+  c[sF] = next.sent; c[rF] = next.replied; c[nF] = next.notExist;
   render();
-  try{
-    await fetch(BACKEND+'/api/contacts/'+id,{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json','x-api-key':API_KEY},
-      body:JSON.stringify({[sF]:next.sent,[rF]:next.replied,[nF]:next.notExist})
+  try {
+    await fetch(BACKEND + '/api/contacts/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+      body: JSON.stringify({ [sF]: next.sent, [rF]: next.replied, [nF]: next.notExist })
     });
-  }catch(e){console.error(e);}
+  } catch(e) { console.error(e); }
 }
 
-let autoSaveTimers={};
-function autoSave(id){
+function hasActivity(c) {
+  const fields = ['wa','sms','msg','ig','email'];
+  return fields.some(f => c[f+'_sent'] || c[f+'_replied'] || c[f+'_not_exist']);
+}
+
+let autoSaveTimers = {};
+function autoSave(id) {
   clearTimeout(autoSaveTimers[id]);
-  autoSaveTimers[id]=setTimeout(()=>save(id),2000);
+  autoSaveTimers[id] = setTimeout(() => save(id), 1500);
 }
-  async function deleteContact(id,name){
-  if(!confirm('Dzēst "'+name+'"?\nŠī darbība ir neatgriezeniska!'))return;
-  try{
-    const res=await fetch(BACKEND+'/api/contacts/'+id,{method:'DELETE',headers:{'x-api-key':API_KEY}});
-    if(res.ok){contacts=contacts.filter(x=>x.id!==id);render();}
+
+async function save(id) {
+  const c = contacts.find(x => x.id === id);
+  const selEl = document.getElementById('sel_' + id);
+  const notesEl = document.getElementById('notes_' + id);
+  const remindEl = document.getElementById('remind_' + id);
+  const newStatus = selEl ? selEl.value : c.status;
+  const newNotes = notesEl ? notesEl.value : c.notes;
+  const newRemind = remindEl ? remindEl.value : c.remind_at;
+  const flash = document.getElementById('flash_' + id);
+  try {
+    const res = await fetch(BACKEND + '/api/contacts/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+      body: JSON.stringify({ status: newStatus, notes: newNotes, remind_at: newRemind || null })
+    });
+    if (res.ok) {
+      c.status = newStatus; c.notes = newNotes; c.remind_at = newRemind || null;
+      c.last_message_at = new Date().toISOString();
+      if (flash) { flash.className = 'flash ok'; flash.textContent = '✓'; }
+    } else {
+      if (flash) { flash.className = 'flash err'; flash.textContent = '✗'; }
+    }
+  } catch(e) {
+    if (flash) { flash.className = 'flash err'; flash.textContent = '✗'; }
+  }
+  setTimeout(() => { if (flash) flash.textContent = ''; render(); }, 1500);
+}
+
+async function deleteContact(id, name) {
+  if (!confirm('Dzēst "' + name + '"?\nŠī darbība ir neatgriezeniska!')) return;
+  try {
+    const res = await fetch(BACKEND + '/api/contacts/' + id, { method: 'DELETE', headers: { 'x-api-key': API_KEY } });
+    if (res.ok) { contacts = contacts.filter(x => x.id !== id); render(); }
     else alert('Kļūda dzēšot!');
-  }catch(e){alert('Nav savienojuma!');}
+  } catch(e) { alert('Nav savienojuma!'); }
 }
 
-function updateCities(){
-  const sel=document.getElementById('fCity');
-  const cities=[...new Set(contacts.map(c=>c.city).filter(Boolean))].sort();
-  sel.innerHTML='<option value="">Visas pilsētas</option>'+cities.map(c=>`<option>${c}</option>`).join('');
+function unblurContact(id) {
+  const c = contacts.find(x => x.id === id);
+  if (!c) return;
+  c.status = 'NEW';
+  render();
+  fetch(BACKEND + '/api/contacts/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+    body: JSON.stringify({ status: 'NEW' })
+  }).catch(e => console.error(e));
 }
 
-function updateStats(){
-  const counts={};STATUSES.forEach(s=>counts[s]=0);
-  contacts.forEach(c=>{if(counts[c.status]!==undefined)counts[c.status]++;});
-  document.getElementById('stats').innerHTML=[
-    ['Kopā',contacts.length],
-    ['Jauni',counts['NEW']],
-    ['Sazināts',counts['CONTACTED']],
-    ['Atbildēja',counts['REPLIED']],
-    ['Info Sent',counts['INFO SENT']],
-    ['Interese',counts['INTERESTED']],
-    ['Nav atb.',counts['NO REPLY']]
-  ].map(([l,v])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('');
-  document.getElementById('headerCount').textContent=contacts.length+' kontakti';
+function updateCities() {
+  const sel = document.getElementById('fCity');
+  const cities = [...new Set(contacts.map(c => c.city).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Visas pilsētas</option>' + cities.map(c => `<option>${c}</option>`).join('');
 }
 
-function render(){
-  const q=document.getElementById('search').value.toLowerCase();
-  const fs=document.getElementById('fStatus').value;
-  const fc=document.getElementById('fCity').value;
-  const filtered=contacts.filter(c=>(!q||(c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.city||'').toLowerCase().includes(q))&&(!fs||c.status===fs)&&(!fc||c.city===fc));
-  document.getElementById('tbody').innerHTML=filtered.map(c=>{
-    const isExp=expanded.has(c.id);
-    const row=`<tr>
-      <td><button class="exp-btn" onclick="toggle(${c.id})">${isExp?'▲':'▼'}</button></td>
-      <td class="name-cell">${c.name||''}</td>
-      <td>${c.city||'–'}</td>
-      <td style="white-space:nowrap">${c.phone||'–'}</td>
-      <td><span class="badge s-${sk(c.status)}">${c.status||''}</span></td>
-      <td>${chBtn(c.wa_sent,c.wa_replied,c.wa_not_exist,'WhatsApp',c.id,'wa')}</td>
-      <td>${chBtn(c.sms_sent,c.sms_replied,c.sms_not_exist,'SMS',c.id,'sms')}</td>
-      <td>${chBtn(c.msg_sent,c.msg_replied,c.msg_not_exist,'Messenger',c.id,'msg')}</td>
-      <td>${chBtn(c.ig_sent,c.ig_replied,c.ig_not_exist,'Instagram',c.id,'ig')}</td>
-      <td>${chBtn(c.email_sent,c.email_replied,c.email_not_exist,'Email',c.id,'email')}</td>
+function updateStats() {
+  const counts = {}; STATUSES.forEach(s => counts[s] = 0);
+  contacts.forEach(c => { if (counts[c.status] !== undefined) counts[c.status]++; });
+  const dueCount = contacts.filter(c => isReminderDue(c.remind_at)).length;
+  document.getElementById('stats').innerHTML = [
+    ['Kopā', contacts.length],
+    ['Jauni', counts['NEW']],
+    ['Sazināts', counts['CONTACTED']],
+    ['Atbildēja', counts['REPLIED']],
+    ['Info Sent', counts['INFO SENT']],
+    ['Interese', counts['INTERESTED']],
+    ['Nav atb.', counts['NO REPLY']],
+    ['⚡ Atgādini', dueCount],
+  ].map(([l,v]) => `<div class="stat"><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('');
+  document.getElementById('headerCount').textContent = contacts.length + ' kontakti';
+}
+
+function toggle(id) { expanded.has(id) ? expanded.delete(id) : expanded.add(id); render(); }
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const fs = document.getElementById('fStatus').value;
+  const fc = document.getElementById('fCity').value;
+  const fr = document.getElementById('fRemind').value;
+
+  let filtered = contacts.filter(c =>
+    (!q || (c.name||'').toLowerCase().includes(q) || (c.phone||'').includes(q) || (c.city||'').toLowerCase().includes(q)) &&
+    (!fs || c.status === fs) &&
+    (!fc || c.city === fc) &&
+    (!fr || (fr === 'due' ? isReminderDue(c.remind_at) : !!c.remind_at))
+  );
+
+  document.getElementById('tbody').innerHTML = filtered.map((c, idx) => {
+    const isExp = expanded.has(c.id);
+    const isNoReply = c.status === 'NO REPLY';
+    const act = hasActivity(c) || isNoReply;
+    const statusClass = act ? 'row-' + sk(c.status) : '';
+    const due = isReminderDue(c.remind_at);
+    const blinkClass = due ? 'remind-due' : '';
+    const rowClass = [statusClass, blinkClass].filter(Boolean).join(' ');
+    const bellIcon = c.remind_at ? (due ? '⚡' : '🔔') : '';
+
+    const reminderCell = `
+      <div class="remind-cell">
+        <span class="remind-bell ${due ? 'due' : 'ok'}">${bellIcon}</span>
+        <input class="mini-date" type="date" id="remind_${c.id}"
+          value="${c.remind_at ? c.remind_at.substring(0,10) : ''}"
+          oninput="autoSave(${c.id})" title="Atgādināt datums">
+      </div>`;
+
+    const unblurBtn = isNoReply
+      ? `<button class="unblur-btn" onclick="unblurContact(${c.id})" title="Atjaunot uz NEW">↩ Atjaunot</button>`
+      : '';
+
+    const row = `<tr class="${rowClass}" id="row_${c.id}">
+      <td class="num-cell">${idx + 1}</td>
+      <td><button class="exp-btn" onclick="toggle(${c.id})">${isExp ? '▲' : '▼'}</button></td>
+      <td style="font-weight:500">${c.name || ''}</td>
+      <td>${c.city || '–'}</td>
+      <td style="white-space:nowrap">${c.phone || '–'}</td>
+      <td><span class="badge s-${sk(c.status)}">${c.status || ''}</span></td>
+      <td>${isNoReply ? '–' : chBtn(c.wa_sent, c.wa_replied, c.wa_not_exist, 'WhatsApp', c.id, 'wa')}</td>
+      <td>${isNoReply ? '–' : chBtn(c.sms_sent, c.sms_replied, c.sms_not_exist, 'SMS', c.id, 'sms')}</td>
+      <td>${isNoReply ? '–' : chBtn(c.msg_sent, c.msg_replied, c.msg_not_exist, 'Messenger', c.id, 'msg')}</td>
+      <td>${isNoReply ? '–' : chBtn(c.ig_sent, c.ig_replied, c.ig_not_exist, 'Instagram', c.id, 'ig')}</td>
+      <td>${isNoReply ? '–' : chBtn(c.email_sent, c.email_replied, c.email_not_exist, 'Email', c.id, 'email')}</td>
       <td style="white-space:nowrap;color:#888">${fmt(c.last_message_at)}</td>
-      <td><input class="mini-input" id="notes_${c.id}" value="${(c.notes||'').replace(/"/g,'&quot;')}" placeholder="Piezīme..." oninput="autoSave(${c.id})"></td>
-      <td style="display:flex;gap:5px;align-items:center;white-space:nowrap">
-      <select class="mini-select" id="sel_${c.id}" onchange="autoSave(${c.id})">${STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('')}</select>
+      <td>${reminderCell}</td>
+      <td>${isNoReply ? unblurBtn : `<input class="mini-input" id="notes_${c.id}" value="${(c.notes||'').replace(/"/g,'&quot;')}" placeholder="Piezīme..." oninput="autoSave(${c.id})">`}</td>
+      <td style="display:flex;gap:4px;align-items:center;white-space:nowrap;flex-wrap:wrap">
+        ${isNoReply
+          ? `<span class="badge s-NO_REPLY" style="font-size:10px">BLUR</span>`
+          : `<select class="mini-select" id="sel_${c.id}" onchange="autoSave(${c.id})">${STATUSES.map(s => `<option ${s===c.status?'selected':''}>${s}</option>`).join('')}</select>`
+        }
         <button class="del-btn" onclick="deleteContact(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🗑</button>
         <span class="flash" id="flash_${c.id}"></span>
-      </td></tr>`;
-    const detail=isExp?`<tr class="detail-row"><td colspan="13"><div class="detail-grid">
+      </td>
+    </tr>`;
+
+    const detail = isExp ? `<tr class="detail-row"><td colspan="15"><div class="detail-grid">
       <div><div class="dl">Mājaslapa</div><div class="dv">${c.website||'–'}</div></div>
       <div><div class="dl">E-pasts</div><div class="dv">${c.email||'–'}</div></div>
       <div><div class="dl">Instagram</div><div class="dv">${c.instagram||'–'}</div></div>
@@ -244,25 +385,13 @@ function render(){
       <div><div class="dl">Valoda</div><div class="dv">${c.language||'–'}</div></div>
       <div><div class="dl">Avots</div><div class="dv">${c.source||'–'}</div></div>
       <div><div class="dl">Pirmais kontakts</div><div class="dv">${fmt(c.first_contact_at)}</div></div>
-    </div></td></tr>`:'';
-    return row+detail;
+      <div><div class="dl">Atgādināt</div><div class="dv">${c.remind_at ? c.remind_at.substring(0,10) : '–'} ${due ? '⚡ Nokavēts!' : ''}</div></div>
+    </div></td></tr>` : '';
+
+    return row + detail;
   }).join('');
+
   updateStats();
-}
-
-function toggle(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render();}
-
-async function save(id){
-  const c=contacts.find(x=>x.id===id);
-  const newStatus=document.getElementById('sel_'+id).value;
-  const newNotes=document.getElementById('notes_'+id).value;
-  const flash=document.getElementById('flash_'+id);
-  try{
-    const res=await fetch(BACKEND+'/api/contacts/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-api-key':API_KEY},body:JSON.stringify({status:newStatus,notes:newNotes})});
-    if(res.ok){c.status=newStatus;c.notes=newNotes;c.last_message_at=new Date().toISOString();flash.className='flash ok';flash.textContent='✓';}
-    else{flash.className='flash err';flash.textContent='✗';}
-  }catch(e){flash.className='flash err';flash.textContent='✗';}
-  setTimeout(()=>{flash.textContent='';render();},1500);
 }
 
 updateStats();
